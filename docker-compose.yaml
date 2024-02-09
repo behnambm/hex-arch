@@ -1,0 +1,39 @@
+version: "3.8"
+
+
+services:
+  app:
+    build:
+      context: .
+    environment:
+      DB_DRIVER: mysql
+      DB_NAME: root:dbpaswd@tcp(db:3306)/history
+      TEST_DB_DRIVER: mysql
+      TEST_DB_NAME: root:dbpaswd@tcp(db:3306)/test_history
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: dbpaswd
+      MYSQL_DATABASE: hex_test
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - ./infrastructure/config/db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3306:3306"
+
+networks:
+  internal:
